@@ -69,7 +69,7 @@ jobs:
         env:
           OPENNEWS_INIT_DB: ${{ github.event.inputs.init_db || 'false' }}
         run: |
-          ./opennews_dl detail -f config.detail.yaml
+          ./opennews_dl detail -f config.detail.yaml -date ${{ steps.date.outputs.date }}
 
       - name: 清理配置文件
         if: always()
