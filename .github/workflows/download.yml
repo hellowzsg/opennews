@@ -23,10 +23,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.BASE_REPO_TOKEN }}
         run: |
-          TAG=$(curl -sL -H "Authorization: token ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ secrets.BASE_REPO_NAME }}/releases/latest" \
-            | jq -r '.tag_name')
+          TAG=$(gh api repos/${{ secrets.BASE_REPO_NAME }}/releases/latest --jq '.tag_name')
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
 
       - name: 缓存可执行文件
@@ -51,14 +48,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.BASE_REPO_TOKEN }}
         run: |
-          # 下载 opennews_dl 二进制
-          curl -sL -H "Authorization: token ${GH_TOKEN}" \
-            -H "Accept: application/octet-stream" \
-            -o opennews_dl \
-            $(curl -sL -H "Authorization: token ${GH_TOKEN}" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/${{ secrets.BASE_REPO_NAME }}/releases/tags/${{ steps.release-tag.outputs.tag }}" \
-              | jq -r '.assets[] | select(.name == "opennews_dl") | .url')
+          gh release download ${{ steps.release-tag.outputs.tag }} \
+            --repo ${{ secrets.BASE_REPO_NAME }} \
+            --pattern "opennews_dl"
           
           chmod +x opennews_dl
 
