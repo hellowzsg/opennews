@@ -41,7 +41,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: output/db
-          key: news-db-${{ steps.date.outputs.date }}
+          key: news-db-${{ steps.date.outputs.date }}-${{ github.run_id }}
+          restore-keys: |
+            news-db-${{ steps.date.outputs.date }}-
 
       - name: 从私有仓库 Release 下载二进制文件
         if: steps.cache-binary.outputs.cache-hit != 'true'
@@ -59,9 +61,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.BASE_REPO_TOKEN }}
         run: |
-          gh api repos/${{ secrets.BASE_REPO_NAME }}/contents/go_proj/opennews_dl/config.detail.yaml \
+          gh api "repos/${{ secrets.BASE_REPO_NAME }}/contents/go_proj/opennews_dl/config.detail.yaml?ref=${{ secrets.BASE_REPO_BRANCH }}" \
             --header "Accept: application/vnd.github.raw+json" \
-            -q '.' --ref ${{ secrets.BASE_REPO_BRANCH }} > config.detail.yaml
+            > config.detail.yaml
 
       - name: 执行新闻详情下载
         env:
