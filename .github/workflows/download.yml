@@ -50,8 +50,9 @@ jobs:
         run: |
           gh release download ${{ steps.release-tag.outputs.tag }} \
             --repo ${{ secrets.BASE_REPO_NAME }} \
-            --pattern "opennews_dl"
+            --pattern "opennews_dl-*-linux-amd64"
           
+          mv opennews_dl-*-linux-amd64 opennews_dl
           chmod +x opennews_dl
 
       - name: 下载配置文件
