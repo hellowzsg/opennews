@@ -1,9 +1,9 @@
 name: 下载新闻详情
 
 on:
-  # schedule:
-  #   # 每1小时执行一次
-  #   - cron: '0 * * * *'
+  schedule:
+    # 每1小时执行一次
+    - cron: '0 * * * *'
   workflow_dispatch: # 支持手动触发
     inputs:
       init_db:

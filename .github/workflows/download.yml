@@ -1,9 +1,9 @@
 name: 下载新闻列表
 
 on:
-  # schedule:
-  #   # 每5分钟执行一次
-  #   - cron: '*/5 * * * *'
+  schedule:
+    # 每5分钟执行一次
+    - cron: '*/5 * * * *'
   workflow_dispatch: # 支持手动触发
     inputs:
       init_db:
