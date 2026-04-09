@@ -5,12 +5,6 @@ on:
     # 每5分钟执行一次
     - cron: '*/5 * * * *'
   workflow_dispatch:
-    inputs:
-      init_db:
-        description: '是否从 R2 初始化数据库'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
   download:
@@ -49,15 +43,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.BASE_REPO_TOKEN }}
         run: |
-          gh api "repos/${{ secrets.BASE_REPO_NAME }}/contents/go_proj/opennews_dl/configs/download.yaml?ref=${{ secrets.BASE_REPO_BRANCH }}" \
+          gh api "repos/${{ secrets.BASE_REPO_NAME }}/contents/go_proj/opennews_dl/configs/config.yaml?ref=${{ secrets.BASE_REPO_BRANCH }}" \
             --header "Accept: application/vnd.github.raw+json" \
-            > download.yaml
+            > config.yaml
 
       - name: 执行新闻列表下载
-        # env:
-        #   OPENNEWS_INIT_DB: ${{ github.event.inputs.init_db || 'false' }}
         run: |
-          ./opennews_dl download -f download.yaml -init-db
+          rm -rf output/*
+          ./opennews_dl init-db  -f config.yaml
+          ./opennews_dl download -f config.yaml
+          ./opennews_dl upload -f config.yaml -file output/daily_news_db -key daily_news_db
+          rm -rf config.yaml
 
       - name: 输出数据库文件大小
         if: always()
@@ -69,8 +65,3 @@ jobs:
               echo "$f: ${SIZE_BYTES} bytes (${SIZE_MB} MB)"
             fi
           done
-
-      - name: 清理配置文件
-        if: always()
-        run: |
-          rm -f download.yaml
