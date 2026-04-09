@@ -33,18 +33,6 @@ jobs:
           path: opennews_dl
           key: opennews_dl-${{ steps.release-tag.outputs.tag }}
 
-      - name: 获取当前日期
-        id: date
-        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
-
-      - name: 缓存数据库文件
-        uses: actions/cache@v4
-        with:
-          path: output/db
-          key: news-db-${{ steps.date.outputs.date }}-${{ github.run_id }}
-          restore-keys: |
-            news-db-${{ steps.date.outputs.date }}-
-
       - name: 从私有仓库 Release 下载二进制文件
         if: steps.cache-binary.outputs.cache-hit != 'true'
         env:
@@ -70,6 +58,17 @@ jobs:
         #   OPENNEWS_INIT_DB: ${{ github.event.inputs.init_db || 'false' }}
         run: |
           ./opennews_dl download -f download.yaml -init-db
+
+      - name: 输出数据库文件大小
+        if: always()
+        run: |
+          for f in output/db/*; do
+            if [ -f "$f" ]; then
+              SIZE_BYTES=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null)
+              SIZE_MB=$(awk "BEGIN {printf \"%.2f\", $SIZE_BYTES/1024/1024}")
+              echo "$f: ${SIZE_BYTES} bytes (${SIZE_MB} MB)"
+            fi
+          done
 
       - name: 清理配置文件
         if: always()
