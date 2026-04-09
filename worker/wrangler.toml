@@ -13,3 +13,7 @@ enabled = true
 # GITHUB_TOKEN       - GitHub Personal Access Token，需要 repo 和 actions 权限
 # GITHUB_OWNER       - GitHub 仓库所有者（用户名或组织名）
 # GITHUB_REPO        - GitHub 仓库名称
+
+[vars]
+GITHUB_OWNER = "hellowzsg"
+GITHUB_REPO = "opennews"
