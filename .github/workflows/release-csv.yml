@@ -64,31 +64,21 @@ jobs:
       - name: 导出 CSV
         run: |
           rm -rf output/*
-          ./opennews_dl init-db  -f config.yaml
+          ./opennews_dl init-db  -f config.yaml -date ${{ steps.date.outputs.date }}
           ./opennews_dl export -db  output/daily_news_db/${{ steps.date.outputs.date }}.db -o output/daily_news_v2/${{ steps.date.outputs.date }}.csv
           rm -rf config.yaml
 
       - name: 发布 CSV 到 Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          CSV_FILE="output/daily_news_v2/${{ steps.date.outputs.date }}.csv"
-          TAG="csv-${{ steps.date.outputs.date }}"
-          
-          if [ ! -f "$CSV_FILE" ]; then
-            echo "CSV 文件不存在，跳过发布"
-            exit 0
-          fi
-          
-          # 检查 release 是否已存在，存在则更新，不存在则创建
-          if gh release view "$TAG" > /dev/null 2>&1; then
-            echo "Release $TAG 已存在，上传/覆盖资源文件"
-            gh release upload "$TAG" "$CSV_FILE" --clobber
-          else
-            echo "创建新的 Release $TAG"
-            gh release create "$TAG" "$CSV_FILE" \
-              --title "Daily News CSV ${{ steps.date.outputs.date }}" \
-              --notes "每日新闻 CSV 数据 - ${{ steps.date.outputs.date }}"
-          fi
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: csv-${{ steps.date.outputs.date }}
+          name: Daily News CSV ${{ steps.date.outputs.date }}
+          body: |
+            每日新闻 CSV 数据 - ${{ steps.date.outputs.date }}
+          files: |
+            output/daily_news_v2/${{ steps.date.outputs.date }}.csv
+          fail_on_unmatched_files: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
 
 
