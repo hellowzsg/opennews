@@ -61,17 +61,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.BASE_REPO_TOKEN }}
         run: |
-          gh api "repos/${{ secrets.BASE_REPO_NAME }}/contents/go_proj/opennews_dl/config.download.yaml?ref=${{ secrets.BASE_REPO_BRANCH }}" \
+          gh api "repos/${{ secrets.BASE_REPO_NAME }}/contents/go_proj/opennews_dl/configs/download.yaml?ref=${{ secrets.BASE_REPO_BRANCH }}" \
             --header "Accept: application/vnd.github.raw+json" \
-            > config.download.yaml
+            > download.yaml
 
       - name: 执行新闻列表下载
-        env:
-          OPENNEWS_INIT_DB: ${{ github.event.inputs.init_db || 'false' }}
+        # env:
+        #   OPENNEWS_INIT_DB: ${{ github.event.inputs.init_db || 'false' }}
         run: |
-          ./opennews_dl download -f config.download.yaml
+          ./opennews_dl download -f download.yaml -init-db
 
       - name: 清理配置文件
         if: always()
         run: |
-          rm -f config.download.yaml
+          rm -f download.yaml
