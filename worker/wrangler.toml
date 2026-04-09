@@ -6,6 +6,9 @@ compatibility_date = "2024-09-01"
 [triggers]
 crons = ["*/5 * * * *"]
 
+[observability]
+enabled = true
+
 # 环境变量说明（需要在 Cloudflare Dashboard 中配置以下 Secrets）：
 # GITHUB_TOKEN       - GitHub Personal Access Token，需要 repo 和 actions 权限
 # GITHUB_OWNER       - GitHub 仓库所有者（用户名或组织名）

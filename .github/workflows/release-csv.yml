@@ -1,0 +1,94 @@
+name: release csv
+
+on:
+  schedule:
+    # 每10分钟执行一次
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # 支持手动触发
+    inputs:
+      date:
+        description: '指定日期（格式：YYYY-MM-DD），留空则使用当天日期'
+        required: false
+        type: string
+
+jobs:
+  detail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 获取最新 Release Tag
+        id: release-tag
+        env:
+          GH_TOKEN: ${{ secrets.BASE_REPO_TOKEN }}
+        run: |
+          TAG=$(gh api repos/${{ secrets.BASE_REPO_NAME }}/releases/latest --jq '.tag_name')
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: 缓存可执行文件
+        id: cache-binary
+        uses: actions/cache@v4
+        with:
+          path: opennews_dl
+          key: opennews_dl-${{ steps.release-tag.outputs.tag }}
+
+      - name: 获取当前日期
+        id: date
+        run: |
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            echo "date=${{ github.event.inputs.date }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 从私有仓库 Release 下载二进制文件
+        if: steps.cache-binary.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.BASE_REPO_TOKEN }}
+        run: |
+          gh release download ${{ steps.release-tag.outputs.tag }} \
+            --repo ${{ secrets.BASE_REPO_NAME }} \
+            --pattern "opennews_dl-*-linux-amd64"
+          
+          mv opennews_dl-*-linux-amd64 opennews_dl
+          chmod +x opennews_dl
+
+      - name: 下载配置文件
+        env:
+          GH_TOKEN: ${{ secrets.BASE_REPO_TOKEN }}
+        run: |
+          gh api "repos/${{ secrets.BASE_REPO_NAME }}/contents/go_proj/opennews_dl/configs/config.yaml?ref=${{ secrets.BASE_REPO_BRANCH }}" \
+            --header "Accept: application/vnd.github.raw+json" \
+            > config.yaml
+
+      - name: 导出 CSV
+        run: |
+          rm -rf output/*
+          ./opennews_dl init-db  -f config.yaml
+          ./opennews_dl export -db  output/daily_news_db/${{ steps.date.outputs.date }}.db -o output/daily_news_v2/${{ steps.date.outputs.date }}.csv
+          rm -rf config.yaml
+
+      - name: 发布 CSV 到 Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CSV_FILE="output/daily_news_v2/${{ steps.date.outputs.date }}.csv"
+          TAG="csv-${{ steps.date.outputs.date }}"
+          
+          if [ ! -f "$CSV_FILE" ]; then
+            echo "CSV 文件不存在，跳过发布"
+            exit 0
+          fi
+          
+          # 检查 release 是否已存在，存在则更新，不存在则创建
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG 已存在，上传/覆盖资源文件"
+            gh release upload "$TAG" "$CSV_FILE" --clobber
+          else
+            echo "创建新的 Release $TAG"
+            gh release create "$TAG" "$CSV_FILE" \
+              --title "Daily News CSV ${{ steps.date.outputs.date }}" \
+              --notes "每日新闻 CSV 数据 - ${{ steps.date.outputs.date }}"
+          fi
+
+
