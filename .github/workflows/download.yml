@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  download:
+  Download:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
