@@ -67,7 +67,7 @@ jobs:
       - name: Export CSV
         run: |
           rm -rf output/*
-          ./opennews_dl init-db  -f config.yaml -date ${{ steps.date.outputs.date }}
+          ./opennews_dl init-db  -f config.yaml -date ${{ steps.date.outputs.date }} -gz
           ./opennews_dl export -db  output/daily_news_db/${{ steps.date.outputs.date }}.db -o output/daily_news_v2/${{ steps.date.outputs.date }}.csv
           
       - name: Archive CSV
@@ -88,7 +88,7 @@ jobs:
           body: |
             每日新闻 CSV 数据 - ${{ steps.date.outputs.date }}
           files: |
-            output/daily_news_v2/${{ steps.date.outputs.date }}.csv
+            output/daily_news_v2_gz/${{ steps.date.outputs.date }}.csv.gz
           fail_on_unmatched_files: false
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: false

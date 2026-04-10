@@ -50,8 +50,19 @@ jobs:
       - name: Execute News List Download
         run: |
           rm -rf output/*
-          ./opennews_dl init-db  -f config.yaml
+          ./opennews_dl init-db  -f config.yaml -gz
           ./opennews_dl download -f config.yaml
+
+      - name: Compress Database Files
+        run: |
+          for f in output/daily_news_db/*; do
+            if [ -f "$f" ]; then
+              gzip "$f"
+            fi
+          done
+
+      - name: Upload and Cleanup
+        run: |
           ./opennews_dl upload -f config.yaml -file output/daily_news_db -key daily_news_db
           rm -rf config.yaml
 
