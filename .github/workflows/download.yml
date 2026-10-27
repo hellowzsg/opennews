@@ -3,7 +3,7 @@ name: Download News List
 on:
   schedule:
     # 每5分钟执行一次
-    - cron: '*/5 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
